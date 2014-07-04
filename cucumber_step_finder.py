@@ -14,27 +14,34 @@ class CucumberBaseCommand(sublime_plugin.WindowCommand, object):
     self.features_path = self.settings.get('cucumber_features_path')  # Default is "features"
     self.step_pattern = self.settings.get('cucumber_step_pattern')    # Default is '.*_steps.*\.rb'
 
-  def find_all_steps(self):
+  def find_step_in_file(self, root, f_name):
     pattern = re.compile(r'((.*)(\/\^.*))\$\/')
+    step_file_path = os.path.join(root, f_name)
+    with codecs.open(step_file_path, encoding='utf-8') as f:
+      index = 0
+      for line in f:
+        match = re.match(pattern, line)
+        if match:
+          self.steps.append((match.group(), index, step_file_path))
+        index += 1
+
+  def find_all_steps(self, file_name=None):
     self.steps = []
     folders = self.window.folders()
-    for folder in folders:
-      for path in os.listdir(folder) + ['.']:
-        full_path = os.path.join(folder, path)
-        if path == self.features_path:
-          self.step_files = []
-          for root, dirs, files in os.walk(full_path, followlinks=True):
-            for f_name in files:
-              if re.match(self.step_pattern, f_name):
-                self.step_files.append((f_name, os.path.join(root, f_name)))
-                step_file_path = os.path.join(root, f_name)
-                with codecs.open(step_file_path, encoding='utf-8') as f:
-                  index = 0
-                  for line in f:
-                    match = re.match(pattern, line)
-                    if match:
-                      self.steps.append((match.group(), index, step_file_path))
-                    index += 1
+    if file_name == None
+      for folder in folders:
+        for path in os.listdir(folder) + ['.']:
+          full_path = os.path.join(folder, path)
+          if path == self.features_path:
+            self.step_files = []
+            for root, dirs, files in os.walk(full_path, followlinks=True):
+              for f_name in files:
+                if re.match(self.step_pattern, f_name):
+                  self.step_files.append((f_name, os.path.join(root, f_name)))
+                  self.find_step_in_file(root, f_name)
+    else:
+      root = os.path.join(file_name)
+      self.find_step_in_file(root, file_name)
 
   def step_found(self, index):
     if index >= 0:
@@ -96,5 +103,18 @@ class CucumberStepFinderCommand(CucumberBaseCommand):
 
   def list_steps(self):
     self.find_all_steps()
+    steps_only = [x[0] for x in self.steps]
+    self.window.show_quick_panel(steps_only, self.step_found)
+
+class CucumberStepFinderLocalCommand(CucumberBaseCommand):
+  def __init__(self, window):
+      CucumberBaseCommand.__init__(self, window)
+
+  def run(self, file_name=None):
+      self.list_steps()
+
+  def list_steps(self):
+    view = self.window.active_view()
+    self.find_all_steps(view.file_name())
     steps_only = [x[0] for x in self.steps]
     self.window.show_quick_panel(steps_only, self.step_found)
