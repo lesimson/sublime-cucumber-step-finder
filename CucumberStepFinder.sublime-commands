@@ -1,4 +1,5 @@
 [
+	{ "command" : "cucumber_step_finder_local", "caption": "Cucumber: Search steps in current file" },
 	{ "command": "cucumber_step_finder", "caption": "Cucumber: Search steps" },
 	{ "command": "match_step", "caption": "Cucumber: Go to step definition" }
 ]

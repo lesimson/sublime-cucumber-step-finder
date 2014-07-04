@@ -5,6 +5,7 @@
     [
         {"id": "find_cucumber_step"},
         { "command": "cucumber_step_finder", "caption": "Find Cucumber Step" },
+        { "command": "cucumber_step_finder_local", "caption": "Find Cucumber Step in current file" },
         { "command": "match_step", "caption": "Match Cucumber Step" }
     ]
 }
