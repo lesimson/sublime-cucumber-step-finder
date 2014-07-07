@@ -42,6 +42,7 @@ class CucumberBaseCommand(sublime_plugin.WindowCommand, object):
     else:
       root = os.path.join(file_name)
       self.find_step_in_file(root, file_name)
+              
 
   def step_found(self, index):
     if index >= 0:
