@@ -79,7 +79,7 @@ class CucumberBaseCommand(sublime_plugin.WindowCommand, object):
   def step_found(self, index):
     if index >= 0:
       file_path = self.steps[index][2]
-      if self.settings_get('cucumber_new_pane') == true:
+      if self.settings_get('cucumber_new_pane') == True:
         other_pane = self.determine_other_pane()
         self.window.focus_group(other_pane)
       match_view = self.window.open_file(file_path)
