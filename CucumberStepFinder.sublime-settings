@@ -1,5 +1,6 @@
 {
-    "cucumber_features_path"  :  "features",
-    "cucumber_step_pattern"   :  ".*_steps.*\\.rb",
-    "cucumber_code_keywords"  :  ["given", "when", "then", "and","but", "und", "dann", "wenn", "gegeben sei", "angenommen"]
+  "cucumber_features_path": "features",
+  "cucumber_step_pattern": ".*_steps.*\\.rb",
+  "cucumber_code_keywords": ["given", "when", "then", "and", "but", "und", "dann", "wenn", "gegeben sei", "angenommen"],
+  "cucumber_new_pane": true
 }

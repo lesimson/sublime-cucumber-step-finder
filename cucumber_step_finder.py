@@ -7,12 +7,18 @@ import codecs
 class CucumberBaseCommand(sublime_plugin.WindowCommand, object):
   def __init__(self, window):
     sublime_plugin.WindowCommand.__init__(self, window)
-    self.load_settings()
 
-  def load_settings(self):
-    self.settings = sublime.load_settings("CucumberStepFinder.sublime-settings")
-    self.features_path = self.settings.get('cucumber_features_path')  # Default is "features"
-    self.step_pattern = self.settings.get('cucumber_step_pattern')    # Default is '.*_steps.*\.rb'
+  def settings_get(self, name):
+    # Get the plugin settings, default and user-defined.
+    plugin_settings = sublime.load_settings('CucumberStepFinder.sublime-settings')
+    # If this is a project, try to grab project-specific settings.
+    if sublime.active_window() and sublime.active_window().active_view():
+      project_settings = sublime.active_window().active_view().settings().get("CucumberStepFinder")
+    else:
+      project_settings = None
+    # Grab the setting, by name, from the project settings if it exists.
+    # Otherwise, default back to the plugin settings.
+    return (project_settings or {}).get(name, plugin_settings.get(name))
 
   def find_step_in_file(self, root, f_name):
     pattern = re.compile(r'((.*)(\/\^.*))\$\/')
@@ -26,35 +32,62 @@ class CucumberBaseCommand(sublime_plugin.WindowCommand, object):
         index += 1
 
   def find_all_steps(self, file_name=None):
+    features_path = self.settings_get('cucumber_features_path')
+    step_pattern = self.settings_get('cucumber_step_pattern')
     self.steps = []
     folders = self.window.folders()
     if file_name == None:
       for folder in folders:
+        if ( not os.path.exists(folder) ) : continue
         for path in os.listdir(folder) + ['.']:
           full_path = os.path.join(folder, path)
-          if path == self.features_path:
+          if path == features_path:
             self.step_files = []
             for root, dirs, files in os.walk(full_path, followlinks=True):
               for f_name in files:
-                if re.match(self.step_pattern, f_name):
+                if re.match(step_pattern, f_name):
                   self.step_files.append((f_name, os.path.join(root, f_name)))
                   self.find_step_in_file(root, f_name)
     else:
       root = os.path.join(file_name)
       self.find_step_in_file(root, file_name)
-              
+
+  def determine_other_pane(self):
+    active_group = self.window.active_group()
+    num_groups = self.window.num_groups()
+    layout = self.window.get_layout()
+    cells = layout['cells']
+    cols = layout['cols']
+    if num_groups == 1:
+      # Only pane. Create a new one.
+      self.window.run_command('set_layout', {
+        "cols": [0.0, 0.5, 1.0],
+        "rows": [0.0, 1.0],
+        "cells": [[0, 0, 1, 1], [1, 0, 2, 1]]
+        })
+      return 1
+    elif active_group == num_groups - 1:
+      # Last pane in window. Use the previous one.
+      return active_group - 1
+    elif len(cols) > 2 and cells[active_group][2] == len(cols) - 1:
+      # Last pane in row. Use the previous one.
+      return active_group - 1
+    else:
+      # Otherwise, use the next one.
+      return active_group + 1
 
   def step_found(self, index):
     if index >= 0:
       file_path = self.steps[index][2]
-      view = self.window.open_file(file_path)
-      self.active_ref = (view, self.steps[index][1])
+      if self.settings_get('cucumber_new_pane') == true:
+        other_pane = self.determine_other_pane()
+        self.window.focus_group(other_pane)
+      match_view = self.window.open_file(file_path)
+      self.active_ref = (match_view, self.steps[index][1])
       self.mark_step()
 
   def mark_step(self):
-
     view = self.window.active_view()
-
     if view.is_loading():
       sublime.set_timeout(self.mark_step, 50)
     else:
@@ -63,7 +96,6 @@ class CucumberBaseCommand(sublime_plugin.WindowCommand, object):
 class MatchStepCommand(CucumberBaseCommand):
   def __init__(self, window):
     CucumberBaseCommand.__init__(self, window)
-    self.words = self.settings.get('cucumber_code_keywords')
 
   def run(self, file_name=None):
     self.get_line()
@@ -75,7 +107,8 @@ class MatchStepCommand(CucumberBaseCommand):
     self.cut_words(text_line)
 
   def cut_words(self, text):
-     upcased = [up.capitalize() for up in self.words]
+     words = self.settings_get('cucumber_code_keywords')
+     upcased = [up.capitalize() for up in words]
      expression = "^{0}".format('|^'.join(upcased))
 
      pattern = re.compile(expression)
