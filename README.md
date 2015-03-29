@@ -28,6 +28,8 @@ The default key-binding for "search" is `super + y` (`ctrl + alt + y`), respecti
 `ctrl + super + m` (`ctrl + shift + m`) for "match".
 Change it if one is already used in your configuration
 
+Alternatively super+click the line in a features file to find it's definition (OSX)
+
 ## Configuration
 The following settings are available so far.
 
@@ -47,7 +49,18 @@ By default English and German are predefined.
 To find out, which keywords to configure e.g. German (language code `de),
 type
 
-    cucumber --18n de
+    cucumber --i18n de
 
  into the console. The last argument is the language code.
  Add all words marked with "code" to the settings.
+
+### Project Specific Configuration
+These settings can be changed globally, or in your `.sublime-project` file.
+
+    "settings":
+    {
+      "CucumberStepFinder":
+      {
+        "cucumber_step_pattern": ".*\\.rb"
+      }
+    }
